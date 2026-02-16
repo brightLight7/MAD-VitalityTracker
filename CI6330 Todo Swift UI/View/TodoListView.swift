@@ -10,79 +10,91 @@ struct TodoListView: View {
     @State private var searchQuery: String = ""
     var body: some View
     {
-        NavigationSplitView
+        VStack
         {
-            VStack
+            TextField("Search todos...", text: $searchQuery)
+                .textFieldStyle(RoundedBorderTextFieldStyle())
+                .padding(.horizontal)
+        }
+        List
+        {
+            ForEach(controller.filteredCatItems(for: category, searchQuery: searchQuery), id: \.id)
             {
-                TextField("Search todos...", text: $searchQuery)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .padding(.horizontal)
-            }
-            List
-            {
-                ForEach(controller.filteredCatItems(for: category, searchQuery: searchQuery), id: \.id)
+                item in HStack
                 {
-                    item in HStack
-                    {
-                        Text(item.title)
-                            .fontWeight(item.isDone ? .bold : .regular)
-                        Spacer()
-                        Image(systemName: item.isDone ? "checkmark" : "square")
-                    }
-                    .contentShape(Rectangle())
-                    .onTapGesture{
-                        controller.toggleItem(item)
-                    }
+                    Text(item.title)
+                        .strikethrough(item.isDone) //Changed from original to allow for text to be striked when completed.
+                    Spacer()
+                    Image(systemName: item.isDone ? "checkmark" : "square")
                 }
-                .onDelete { indexSet in
-                    for index in indexSet
-                    {
-                        let item = controller.todoItems[index]
-                        controller.deleteItem(item)
-                    }
+                .contentShape(Rectangle())
+                .onTapGesture{
+                    controller.toggleItem(item)
                 }
             }
-            
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing)
+            .onDelete { indexSet in
+                for index in indexSet
                 {
-                    Button(action: {
-                        showAdd = true
-                    })
-                    {
-                        Label("Add Item", systemImage: "plus")
-                    }
-                    
+                    let item = controller.todoItems[index]
+                    controller.deleteItem(item)
                 }
             }
-            .alert("Add Todo", isPresented: $showAdd){
-                TextField("Enter new todo", text: $newItem)
-                Button("Add")
-                {
-                    controller.addItem(title: newItem, to: category)
-                    newItem = ""
-                }
-                Button("Not now", role: .cancel) {
-                    newItem = ""
-                }
-            }message: {
-                Text("Enter a new task to add to the list")
-            }
-            .navigationTitle(category.name)
         }
         
-    detail:
-        {
-            Text("Todos")
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing)
+            {
+                Button(action: {
+                    showAdd = true
+                })
+                {
+                    Label("Add Item", systemImage: "plus")
+                }
+                
+            }
         }
+        .alert("Add Todo", isPresented: $showAdd){
+            TextField("Enter new todo", text: $newItem)
+            Button("Add")
+            {
+                controller.addItem(title: newItem, to: category)
+                newItem = ""
+            }
+            Button("Not now", role: .cancel) {
+                newItem = ""
+            }
+        }message: {
+            Text("Enter a new task to add to the list")
+        }
+        //.navigationTitle(category.name)
         .onAppear
         {
+            
             controller.setModelContext(modelContext)
         }
+        .navigationTitle(category.name)
     }
+
+}
     
-}
+
+//#Preview {
+//    TodoListView(category: Category(name: "Sample"))
+//        .modelContainer(for: Item.self, inMemory: true)
+//}
+
 #Preview {
-    TodoListView(category: Category(name: "Sample"))
-        .modelContainer(for: Item.self, inMemory: true)
+    ContentView()
+        .modelContainer(for: [Category.self, Item.self], inMemory: true)
 }
+
+
+
+
+
+
+
+
+
+
+
