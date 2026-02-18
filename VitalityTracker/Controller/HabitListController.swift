@@ -2,15 +2,19 @@
 //  ToDoListController.swift
 //  CI6330 Todo Swift UI
 //
-//  Created by Sajid, Abdullah on 03/02/2026.
+//  Created by Sajid, OJ on 03/02/2026.
 //
 
 import SwiftUI
 import SwiftData
 
-class ToDoListController: ObservableObject{
+
+
+class HabitController: ObservableObject{
     private var modelContext: ModelContext?
-    @Published var todoItems: [Item] = []
+    @Published var habitItems: [Item] = []
+    @Published var dailyLog: [String : DailyLog]
+    @State var streak = 0
     
     init(modelContext: ModelContext? = nil) {
         self.modelContext = modelContext
@@ -50,7 +54,7 @@ class ToDoListController: ObservableObject{
     func fetchItems() {
         guard let modelContext = modelContext else {return}
         do {
-            todoItems = try modelContext.fetch(FetchDescriptor<Item>())
+            habitItems = try modelContext.fetch(FetchDescriptor<Item>())
         }
         catch
         {
@@ -91,12 +95,12 @@ class ToDoListController: ObservableObject{
     func filteredTodoItems(searchQuery: String) -> [Item]
     {
         if searchQuery.isEmpty {
-            return todoItems
+            return habitItems
             
         }
         else
         {
-            return todoItems.filter { $0.title.localizedCaseInsensitiveContains(searchQuery)}
+            return habitItems.filter { $0.title.localizedCaseInsensitiveContains(searchQuery)}
         }
     }
     
@@ -115,7 +119,27 @@ class ToDoListController: ObservableObject{
         }
         else
         {
-            return todoItems
+            return habitItems
+        }
+    }
+    
+    func streaks(_ item: Item)
+    {
+        var day = Date.now
+        var yesterday = 
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        let dayKey = formatter.string(from: day)
+        
+        
+        while let log = dailyLog[dayKey]
+        {
+            if log.IDs_completedHabit.contains(item.id)
+            {
+                streak = streak + 1
+                day = Date.
+            }
+            
         }
     }
 }
