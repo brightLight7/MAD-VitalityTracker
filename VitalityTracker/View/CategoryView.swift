@@ -11,6 +11,7 @@ import SwiftData
 struct CategoryView: View {
     @Environment(\.modelContext) private var modelContext
     @StateObject private var controller = CategoryController()
+    @StateObject private var habitController = HabitListController()
     @State private var newCat: String = ""
     @State private var showAdd: Bool = false
     @State private var selectedCategory: Category?
@@ -22,7 +23,7 @@ struct CategoryView: View {
             List
             {
                 ForEach(controller.categories, id: \.id) { cat in
-                    NavigationLink(destination: TodoListView(category: cat), label: { Text(cat.name) })
+                    NavigationLink(destination: HabitListView(category: cat).environmentObject(habitController), label: { Text(cat.name) })
                 }
                 .onDelete
                 {
@@ -64,6 +65,7 @@ struct CategoryView: View {
         .onAppear
         {
             controller.setModelContext(modelContext)
+            habitController.setModelContext(modelContext)
         }
     }
 }

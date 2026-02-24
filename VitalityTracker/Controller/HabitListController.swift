@@ -7,14 +7,16 @@
 
 import SwiftUI
 import SwiftData
+import Foundation
 
 
 
-class HabitController: ObservableObject{
+class HabitListController: ObservableObject{
     private var modelContext: ModelContext?
     @Published var habitItems: [Item] = []
-    @Published var dailyLog: [String : DailyLog]
-    @State var streak = 0
+    @Published var dailyLog: [String : DailyLog] = [:]
+    @Published var selectedDate: Date = Date()
+    private var calendar: Calendar {Calendar.current}
     
     init(modelContext: ModelContext? = nil) {
         self.modelContext = modelContext
@@ -123,23 +125,95 @@ class HabitController: ObservableObject{
         }
     }
     
-    func streaks(_ item: Item)
+    // Part of the Streaks component:
+    // Reusable Formatter component
+    private static let dayKeyFormatter: DateFormatter = {
+        let df = DateFormatter()
+        df.dateFormat = "yyyy-MM-dd" // MM means months whereas mm would means minutes...
+        return df
+    }()
+    
+    private func dayKey(for date : Date) -> String {
+        let day = calendar.startOfDay(for: date)
+        return Self.dayKeyFormatter.string(from: day)
+    }
+    
+    func isCompleted(_ itemID: UUID, on date: Date) -> Bool
     {
-        var day = Date.now
-        var yesterday = 
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd"
-        let dayKey = formatter.string(from: day)
+        let key = dayKey(for: date)
+        return dailyLog[key]?.IDs_completedHabit.contains(itemID) == true
+    }
+    
+    private func previousDay(_ date : Date) -> Date {
+        calendar.date(byAdding: .day, value: -1, to: date) ?? date
+    }
+    
+    private func getOrCreateALog(for date : Date) -> DailyLog {
+        let day = calendar.startOfDay(for: date)
+        let key = dayKey(for: day)
         
+        if let existing = dailyLog[key] {
+            return existing
+        }
         
-        while let log = dailyLog[dayKey]
+        let created = DailyLog(date: day, IDs_completedHabit: [])
+        dailyLog[key] = created
+        return created
+    }
+    
+    // Checker of Habit completion
+    func isHabitCompletedToday(_ item: Item) -> Bool {
+        let key = dayKey(for: Date())
+        return dailyLog[key]?.IDs_completedHabit.contains(item.id) ?? false
+    }
+    
+    // Insertion or Removal of UUID
+    func toggleCompletionToday(_ item: Item)
+    {
+        let key = dayKey(for: Date())
+        var log = dailyLog[key] ?? DailyLog(date: calendar.startOfDay(for: Date()), IDs_completedHabit: [])
+        if log.IDs_completedHabit.contains(item.id)
         {
-            if log.IDs_completedHabit.contains(item.id)
+            log.IDs_completedHabit.remove(item.id)
+        }
+        else
+        {
+            log.IDs_completedHabit.insert(item.id)
+        }
+        
+        dailyLog[key] = log
+    }
+    
+    func streak (for item: Item) -> Int{
+        var streakCount = 0
+        var day = calendar.startOfDay(for: Date())
+        
+        while true
+        {
+            let key = dayKey(for: day)
+            guard let log = dailyLog[key],
+                  log.IDs_completedHabit.contains(item.id)
+            else
             {
-                streak = streak + 1
-                day = Date.
+                break
             }
             
+            streakCount += 1
+            let previousDay = previousDay(day)
+            
+            //Simple error handling if previous day fails
+            if previousDay == day {break}
+            
+            day = previousDay
         }
+        return streakCount
     }
+    
+    
+    
+    
+    
+    
+    
+    
 }

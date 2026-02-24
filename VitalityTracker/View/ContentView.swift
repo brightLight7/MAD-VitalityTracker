@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct ContentView: View {
+    @StateObject private var controller = HabitListController()
     var body: some View {
         
             CategoryView()

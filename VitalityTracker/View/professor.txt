@@ -1,0 +1,41 @@
+////
+////  professor.txt
+////  VitalityTracker
+////
+////  Created by Abdullah Sajid on 24/02/2026.
+////
+//
+//Question About Streak State Persistence
+//
+//Hi [Professor Name],
+//
+//I’m currently implementing streak tracking in my iOS habit app.
+//
+//At the moment, I’ve identified two possible approaches:
+//
+//Option 1 – Navigation-Level State (In-Memory Only)
+//
+//The streak data is stored in a shared controller.
+//
+//Streaks remain correct when navigating between views.
+//
+//However, streak data resets if the app is closed or restarted.
+//
+//Simpler implementation.
+//
+//Option 2 – Persistent State (Saved Across App Restarts)
+//
+//Streak data is stored persistently (e.g., UserDefaults / SwiftData).
+//
+//Streaks remain correct even after closing and reopening the app.
+//
+//More realistic production behaviour.
+//
+//Slightly more complex implementation.
+//
+//From a marking criteria perspective, would you prefer:
+//
+//A correct navigation-level state solution,
+//or
+//
+//Full persistence across app sessions?
