@@ -9,7 +9,7 @@ import SwiftUI
 import SwiftData
 
 @main
-struct CI6330_Todo_Swift_UIApp: App {
+struct VitalityTracker: App {
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
             Category.self,

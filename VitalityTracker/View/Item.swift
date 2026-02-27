@@ -13,12 +13,14 @@ class Item{
     var id: UUID
     var title: String = ""
     var isDone: Bool
+    var createdDate: Date
     
     init (title: String)
     {
         self.id = UUID()
         self.title = title
         self.isDone = false
+        self.createdDate = Calendar.current.startOfDay(for: Date())
     }
 }
 

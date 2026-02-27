@@ -5,13 +5,75 @@ struct HabitListView: View {
     let category: Category
     @Environment(\.modelContext) private var modelContext
     @EnvironmentObject var controller: HabitListController
+    
     @State private var showAdd: Bool = false
     @State private var newItem: String = ""
     @State private var searchQuery: String = ""
+    @State private var viewingDate: Date = Date()
+    
+    private var isToday: Bool
+    {
+        Calendar.current.isDateInToday(viewingDate)
+    }
+    
+    private var dateTitle: String
+    {
+        let df = DateFormatter()
+        df.dateStyle = .full
+        return df.string(from: Calendar.current.startOfDay(for: viewingDate))
+    }
     
     var displayedItems: [Item]{
-        controller.filteredCatItems(for: category, searchQuery: searchQuery)
+        let base = controller.filteredCatItems(for: category, searchQuery: searchQuery)
+        
+        let selectedDate = Calendar.current.startOfDay(for: viewingDate)
+        
+        return base.filter
+        {
+            $0.createdDate <= selectedDate
+        }
     }
+    
+    private var dayBar: some View
+    {
+        HStack(spacing: 12)
+        {
+            Button
+            {
+                viewingDate = Calendar.current.date(byAdding: .day, value: -1, to: viewingDate) ?? viewingDate
+            } label:
+            {
+                Image(systemName: "chevron.left")
+                Text("Previous Day")
+            }
+            
+            Spacer()
+            
+            VStack(spacing: 2)
+            {
+                Text(dateTitle).font(.headline)
+                if !isToday
+                {
+                    Text("Read-only").font(.caption).foregroundStyle(.secondary)
+                }
+            }
+            
+            Spacer()
+            
+            Button
+            {
+                viewingDate = Calendar.current.date(byAdding: .day, value: 1, to: viewingDate) ?? viewingDate
+            } label:
+            {
+                Text("Next Day")
+                Image(systemName: "chevron.right")
+            }
+            .disabled(isToday)
+        }
+        .padding(.horizontal)
+        .padding(.top, 8)
+    }
+    
     var body: some View
     {
         VStack
@@ -20,69 +82,51 @@ struct HabitListView: View {
                 .textFieldStyle(RoundedBorderTextFieldStyle())
                 .padding(.horizontal)
         }
+        
+        dayBar
+        
         List
         {
-            ForEach(controller.filteredCatItems(for: category, searchQuery: searchQuery), id: \.id)
+            
+            
+            ForEach(displayedItems, id: \.id)
             {
-                item in HStack (spacing: 12)
+                (item: Item) in
+                let done = controller.isCompleted(item.id, on: viewingDate)
+                let s = controller.streak(for: item, endingOn: viewingDate)
+                
+                HStack (spacing: 12)
                 {
-                    Image(systemName: controller.isHabitCompletedToday(item) ? "checkmark.square.fill": "square")
-                        .onTapGesture {
-                            controller.toggleCompletionToday(item)
-                        }
-//                    VStack(alignment: .leading, spacing: 4)
-//                    {
-//                        Text(item.title)
-////                            .strikethrough(item.isDone) //Changed from original to allow for text to be striked when completed.
-//                        
-//                        Spacer()
-//                        let s = controller.streak(for: item)
-//                        
-//                        HStack(spacing: 4){
-//                            if s > 0
-//                            {
-//                                Text("🔥")
-//                            }
-//                            Text("\(s)")
-//                                .font(.caption)
-//                                .foregroundStyle(.secondary)
-//                        }
-//                        
-//                    }
+                    Image(systemName: done ? "checkmark.square.fill": "square")
                     
-                    HStack
+                    Text(item.title)
+                        .strikethrough(done)
+                    Spacer()
+                    if s > 0
                     {
-                        Text(item.title)
-                            .strikethrough(controller.isHabitCompletedToday(item))
-                        Spacer()
-                        let s = controller.streak(for: item)
-                        if s > 0
+                        HStack(spacing: 4)
                         {
-                            HStack(spacing: 4)
-                            {
-                                Text("🔥")
-                                Text("\(s)")
-                                    .font(.caption)
-                                    .bold()
-                                    .foregroundStyle(.orange)
-                            }
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
-                            .background(.thinMaterial)
-                            .clipShape(Capsule())
-                            
+                            Text("🔥")
+                            Text("\(s)")
+                                .font(.caption)
+                                .bold()
+                                .foregroundStyle(.orange)
                         }
-                        
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(.thinMaterial)
+                        .clipShape(Capsule())
                         
                     }
                     
-//                    Spacer()
-                    //Image(systemName: item.isDone ? "checkmark" : "square")
+                    
                 }
                 .contentShape(Rectangle())
                 .onTapGesture{
-                    controller.toggleCompletionToday(item)
+                    //guard isToday else {return} // read-only for previous days
+                    controller.toggleCompletion(item.id, on: viewingDate)
                 }
+                .opacity(isToday ? 1 : 0.85)
             }
             .onDelete { indexSet in
                 for index in indexSet
@@ -92,7 +136,7 @@ struct HabitListView: View {
                 }
             }
         }
-        
+        .navigationTitle(category.name)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing)
             {
@@ -123,17 +167,12 @@ struct HabitListView: View {
         {
             
             controller.setModelContext(modelContext)
+            // viewingDate = Date()
         }
         .navigationTitle(category.name)
     }
-
-}
     
-
-//#Preview {
-//    TodoListView(category: Category(name: "Sample"))
-//        .modelContainer(for: Item.self, inMemory: true)
-//}
+}
 
 #Preview {
     ContentView()

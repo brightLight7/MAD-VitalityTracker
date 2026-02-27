@@ -41,17 +41,6 @@ class HabitListController: ObservableObject{
         fetchItems()
     }
     
-    // (C)REATE
-//    func addItem(_ title: String)
-//    {
-//        guard let modelContext = modelContext else {return}
-//        guard !title.isEmpty else {return}
-//        let newItem = Item(title: title)
-//        modelContext.insert(newItem)
-//        saveContent()
-//        fetchItems()
-//    }
-    
     // (R)EAD
     func fetchItems() {
         guard let modelContext = modelContext else {return}
@@ -167,26 +156,45 @@ class HabitListController: ObservableObject{
         return dailyLog[key]?.IDs_completedHabit.contains(item.id) ?? false
     }
     
-    // Insertion or Removal of UUID
-    func toggleCompletionToday(_ item: Item)
+    func toggleCompletion(_ itemID: UUID, on date: Date)
     {
-        let key = dayKey(for: Date())
-        var log = dailyLog[key] ?? DailyLog(date: calendar.startOfDay(for: Date()), IDs_completedHabit: [])
-        if log.IDs_completedHabit.contains(item.id)
+        let k = dayKey(for: date)
+        var log = dailyLog[k] ?? DailyLog(date: calendar.startOfDay(for: date), IDs_completedHabit: [])
+        
+        if dailyLog[k] == nil
         {
-            log.IDs_completedHabit.remove(item.id)
+            dailyLog[k] = DailyLog(date: calendar.startOfDay(for: date),
+            IDs_completedHabit: [])
+        }
+        
+        if log.IDs_completedHabit.contains(itemID)
+        {
+            log.IDs_completedHabit.remove(itemID)
         }
         else
         {
-            log.IDs_completedHabit.insert(item.id)
+            log.IDs_completedHabit.insert(itemID)
         }
-        
-        dailyLog[key] = log
+        dailyLog[k] = log
+        //print("dailyLog keys:", dailyLog.keys.sorted())
+    }
+    // Insertion or Removal of UUID
+    func toggleCompletionToday(_ itemID: UUID)
+    {
+
+        toggleCompletion(itemID, on: Date())
+        print("dailyLog keys:", dailyLog.keys.sorted())
     }
     
-    func streak (for item: Item) -> Int{
+    func streak (for item: Item) -> Int
+    {
+        streak(for: item, endingOn: Date())
+    }
+    
+    
+    func streak (for item: Item, endingOn endDate: Date) -> Int{
         var streakCount = 0
-        var day = calendar.startOfDay(for: Date())
+        var day = calendar.startOfDay(for: endDate)
         
         while true
         {
@@ -208,6 +216,8 @@ class HabitListController: ObservableObject{
         }
         return streakCount
     }
+    
+    
     
     
     
