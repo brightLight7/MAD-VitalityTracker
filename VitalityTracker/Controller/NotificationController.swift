@@ -40,6 +40,14 @@ class NotificationController: ObservableObject
         let request = UNNotificationRequest(identifier: "dailyReminder",
                                             content: content,
                                             trigger: trigger)
+        
+        center.add(request)
+        { error in
+            if let error = error
+            {
+                print("Failed to schedule reminder: \(error)")
+            }
+        }
     }
     
     

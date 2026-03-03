@@ -40,7 +40,7 @@ struct HomeView: View {
                     
                     Button("Allow Notifications")
                     {
-                        NotificationController.shared.requestPermission{granted in
+                        controller.requestPermission{granted in
                             hasSeenOnboarding = true
                         }
                     }
@@ -55,31 +55,7 @@ struct HomeView: View {
                     .buttonStyle(.bordered)
                     
                     Spacer()
-                    
-//                    if let permissionStatusText
-//                    {
-//                        Text(permissionStatusText)
-//                            .font(.footnote)
-//                            .foregroundStyle(.secondary)
-//                            .padding(.top, 4)
-//                    }
-                    
-                    
-                    
-//                    VStack(spacing: 12)
-//                    {
-//                        Button
-//                        {
-////                            controller.handleAllowNotificationsTapped()
-//                        }
-//                    label:
-//                        {
-//                            Text("Continue Without Notifications")
-//                                .frame(maxWidth: .infinity)
-//                        }
-//                        .buttonStyle(.bordered)
-//                    }
-//                    .padding()
+
                 }.padding()
                     .alert("Are you sure you want to ontinue without enabling notifications?", isPresented: $showContinueAlert)
                 {
@@ -89,30 +65,7 @@ struct HomeView: View {
                         hasSeenOnboarding = true
                     }
                 }
-//                .alert("Continue without enabling notifications?", isPresented: controller.showContinueWithoutNotificationsAlert)
-//                {
-//                    Button("No", role: .cancel) {}
-//                    Button("Yes", role: .destructive)
-//                    {
-//                        hasSeenOnboarding = true
-//                    }
-//                }
-//                message:
-//                {
-//                    Text("You can enable notifications later in Settings if you change your mind.")
-//                }
-//                .alert("Notifications are disabled", isPresented: $showGoToSettingsAlert)
-//                {
-//                    Button("Cancel", role: .cancel) {}
-//                    Button("Open Settings")
-//                    {
-////                        controller.openAppSettings()
-//                    }
-//                }
-//                message:
-//                {
-//                    Text("To enable notifications, open Settings and turn on notifications for VitalityTracker.")
-//                }
+
                 
             }
         }

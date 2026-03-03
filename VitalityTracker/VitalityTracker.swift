@@ -10,6 +10,9 @@ import SwiftData
 
 @main
 struct VitalityTracker: App {
+    //@StateObject private var controller = HabitListController()
+    @StateObject private var streaksController = StreaksController()
+    @StateObject private var notificationController = NotificationController()
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
             Category.self,
@@ -29,6 +32,8 @@ struct VitalityTracker: App {
         WindowGroup
         {
             ContentView()
+                .environmentObject(streaksController)
+                .environmentObject(notificationController)
         }
         .modelContainer(sharedModelContainer)
     }

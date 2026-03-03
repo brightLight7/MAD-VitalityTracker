@@ -9,18 +9,20 @@ class StreaksController: ObservableObject
     @Published var dailyLog: [String : DailyLog] = [:]
     @Published var selectedDate: Date = Date()
     private var calendar: Calendar {Calendar.current}
-    // Part of the Streaks component:
-    // Reusable Formatter component
+    
     private static let dayKeyFormatter: DateFormatter = {
         let df = DateFormatter()
         df.dateFormat = "yyyy-MM-dd" // MM means months whereas mm would means minutes...
         return df
     }()
     
+    
+    
     private func dayKey(for date : Date) -> String {
         let day = calendar.startOfDay(for: date)
         return Self.dayKeyFormatter.string(from: day)
     }
+    
     
     func isCompleted(_ itemID: UUID, on date: Date) -> Bool
     {
@@ -31,20 +33,7 @@ class StreaksController: ObservableObject
     private func previousDay(_ date : Date) -> Date {
         calendar.date(byAdding: .day, value: -1, to: date) ?? date
     }
-    
-    private func getOrCreateALog(for date : Date) -> DailyLog {
-        let day = calendar.startOfDay(for: date)
-        let key = dayKey(for: day)
-        
-        if let existing = dailyLog[key] {
-            return existing
-        }
-        
-        let created = DailyLog(date: day, IDs_completedHabit: [])
-        dailyLog[key] = created
-        return created
-    }
-    
+
     // Checker of Habit completion
     func isHabitCompletedToday(_ item: Item) -> Bool {
         let key = dayKey(for: Date())
@@ -71,6 +60,7 @@ class StreaksController: ObservableObject
             log.IDs_completedHabit.insert(itemID)
         }
         dailyLog[k] = log
+        saveDailyLog()
         //print("dailyLog keys:", dailyLog.keys.sorted())
     }
     // Insertion or Removal of UUID
@@ -100,7 +90,6 @@ class StreaksController: ObservableObject
             {
                 break
             }
-            
             streakCount += 1
             let previousDay = previousDay(day)
             
@@ -110,5 +99,40 @@ class StreaksController: ObservableObject
             day = previousDay
         }
         return streakCount
+    }
+    
+    // DATA PERSISTANCE COMPONENTS BELOW:
+    private let dailyLogKey = "dailyLog.v1"
+    
+    init()
+    {
+        loadDailyLog()
+    }
+    
+    private func saveDailyLog()
+    {
+        do
+        {
+            let data = try JSONEncoder().encode(dailyLog)
+            UserDefaults.standard.set(data, forKey: dailyLogKey)
+        }
+        catch
+        {
+            print("Failed to save daily log: \(error)")
+        }
+    }
+    
+    private func loadDailyLog()
+    {
+        guard let data = UserDefaults.standard.data(forKey: dailyLogKey) else {return}
+        
+        do
+        {
+            dailyLog = try JSONDecoder().decode([String: DailyLog].self, from: data)
+        }
+        catch
+        {
+            print("Failed to load daily log: \(error)")
+        }
     }
 }

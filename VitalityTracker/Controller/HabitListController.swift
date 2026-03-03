@@ -52,9 +52,15 @@ class HabitListController: ObservableObject{
     }
  
     // (D)ELETE
-    func deleteItem(_ item: Item)
+    func deleteItem(_ item: Item, from category: Category? = nil)
     {
         guard let modelContext = modelContext else {return}
+        
+        if let category = category
+        {
+            category.items.removeAll{$0.id == item.id}
+        }
+        
         modelContext.delete(item)
         saveContent()
         fetchItems()
@@ -103,5 +109,14 @@ class HabitListController: ObservableObject{
         {
             return habitItems
         }
-    }   
+    }
+    
+    func updateItemTitle(_ item: Item, newTitle: String)
+    {
+        let trimmed = newTitle.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else {return}
+        item.title = trimmed
+        saveContent()
+        fetchItems()
+    }
 }

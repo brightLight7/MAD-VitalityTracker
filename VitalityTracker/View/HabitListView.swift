@@ -7,6 +7,11 @@ struct HabitListView: View {
     @EnvironmentObject var controller: HabitListController
     @EnvironmentObject var streaksController: StreaksController
     
+    @State private var selectedItem: Item? = nil
+    @State private var showEditSheet = false
+    @State private var showQuickRename = false
+    @State private var quickRenameText = ""
+    
     @State private var showAdd: Bool = false
     @State private var newItem: String = ""
     @State private var searchQuery: String = ""
@@ -79,7 +84,7 @@ struct HabitListView: View {
     {
         VStack
         {
-            TextField("Search todos...", text: $searchQuery)
+            TextField("Search habits...", text: $searchQuery)
                 .textFieldStyle(RoundedBorderTextFieldStyle())
                 .padding(.horizontal)
         }
@@ -98,10 +103,20 @@ struct HabitListView: View {
                 
                 HStack (spacing: 12)
                 {
-                    Image(systemName: done ? "checkmark.square.fill": "square")
+                    Button
+                    {
+                        streaksController.toggleCompletion(item.id, on: viewingDate)
+                    }
+                label:
+                    {
+                        Image(systemName: done ? "checkmark.square.fill" : "square")
+                            .font(.title3)
+                    }
+                    .buttonStyle(.plain)
                     
                     Text(item.title)
                         .strikethrough(done)
+                    
                     Spacer()
                     if s > 0
                     {
@@ -125,15 +140,22 @@ struct HabitListView: View {
                 .contentShape(Rectangle())
                 .onTapGesture{
                     //guard isToday else {return} // read-only for previous days
-                    streaksController.toggleCompletion(item.id, on: viewingDate)
+                    selectedItem = item
+                    showEditSheet = true
                 }
-                .opacity(isToday ? 1 : 0.85)
+                //.opacity(isToday ? 1 : 0.85)
+                .onLongPressGesture
+                {
+                    selectedItem = item
+                    quickRenameText = item.title
+                    showQuickRename = true
+                }
             }
             .onDelete { indexSet in
-                for index in indexSet
+                for index in indexSet.sorted(by: >)
                 {
                     let item = displayedItems[index]
-                    controller.deleteItem(item)
+                    controller.deleteItem(item, from: category)
                 }
             }
         }
@@ -145,13 +167,13 @@ struct HabitListView: View {
                     showAdd = true
                 })
                 {
-                    Label("Add Item", systemImage: "plus")
+                    Label("Create habit", systemImage: "plus")
                 }
                 
             }
         }
-        .alert("Add Todo", isPresented: $showAdd){
-            TextField("Enter new todo", text: $newItem)
+        .alert("Add Habit", isPresented: $showAdd){
+            TextField("Enter new habit", text: $newItem)
             Button("Add")
             {
                 controller.addItem(title: newItem, to: category)
@@ -160,8 +182,32 @@ struct HabitListView: View {
             Button("Not now", role: .cancel) {
                 newItem = ""
             }
-        }message: {
-            Text("Enter a new task to add to the list")
+        }
+        .sheet(isPresented: $showEditSheet)
+        {
+            if let selectedItem
+            {
+                HabitSheet(
+                    item: selectedItem,
+                    onSave: {newTitle in
+                        controller.updateItemTitle(selectedItem, newTitle: newTitle)}
+                )
+            }
+        }
+        .alert("Rename Habit", isPresented: $showQuickRename)
+        {
+            TextField("habit title", text: $quickRenameText)
+            Button("Cancel", role: .cancel) {}
+            Button("Save")
+            {
+                if let selectedItem
+                {
+                    controller.updateItemTitle(selectedItem, newTitle: quickRenameText)
+                }
+            }
+        }
+        message: {
+            Text("Enter a new habit to add to the list")
         }
         //.navigationTitle(category.name)
         .onAppear
