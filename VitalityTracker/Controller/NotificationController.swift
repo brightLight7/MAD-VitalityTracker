@@ -9,14 +9,16 @@ class NotificationController: ObservableObject
     
     init(){}
     
-    func requestPermission()
+    func requestPermission(completion: @escaping (Bool) -> Void)
     {
         UNUserNotificationCenter.current()
-            .requestAuthorization(options: [.alert, .sound, .badge]) { _, _ in }
+            .requestAuthorization(options: [.alert, .sound, .badge]) { granted, _ in
+        DispatchQueue.main.async { completion(granted) }
+        }
         
     }
     
-    func scheduleDailyReminder(remaining x: Int)
+    func scheduleDailyReminder(remaining x: Int, hour: Int = 19, minute: Int = 0)
     {
         let center = UNUserNotificationCenter.current()
         center.removePendingNotificationRequests(withIdentifiers: ["dailyReminder"])
@@ -31,8 +33,8 @@ class NotificationController: ObservableObject
         content.sound = .default
         
         var date = DateComponents()
-        date.hour = 19
-        date.minute = 0
+        date.hour = hour
+        date.minute = minute
         
         let trigger = UNCalendarNotificationTrigger(dateMatching: date, repeats: true)
         let request = UNNotificationRequest(identifier: "dailyReminder",

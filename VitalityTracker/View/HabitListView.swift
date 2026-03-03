@@ -5,6 +5,7 @@ struct HabitListView: View {
     let category: Category
     @Environment(\.modelContext) private var modelContext
     @EnvironmentObject var controller: HabitListController
+    @EnvironmentObject var streaksController: StreaksController
     
     @State private var showAdd: Bool = false
     @State private var newItem: String = ""
@@ -44,7 +45,7 @@ struct HabitListView: View {
             } label:
             {
                 Image(systemName: "chevron.left")
-                Text("Previous Day")
+                Text("Prev")
             }
             
             Spacer()
@@ -65,7 +66,7 @@ struct HabitListView: View {
                 viewingDate = Calendar.current.date(byAdding: .day, value: 1, to: viewingDate) ?? viewingDate
             } label:
             {
-                Text("Next Day")
+                Text("Next")
                 Image(systemName: "chevron.right")
             }
             .disabled(isToday)
@@ -92,8 +93,8 @@ struct HabitListView: View {
             ForEach(displayedItems, id: \.id)
             {
                 (item: Item) in
-                let done = controller.isCompleted(item.id, on: viewingDate)
-                let s = controller.streak(for: item, endingOn: viewingDate)
+                let done = streaksController.isCompleted(item.id, on: viewingDate)
+                let s = streaksController.streak(for: item, endingOn: viewingDate)
                 
                 HStack (spacing: 12)
                 {
@@ -124,7 +125,7 @@ struct HabitListView: View {
                 .contentShape(Rectangle())
                 .onTapGesture{
                     //guard isToday else {return} // read-only for previous days
-                    controller.toggleCompletion(item.id, on: viewingDate)
+                    streaksController.toggleCompletion(item.id, on: viewingDate)
                 }
                 .opacity(isToday ? 1 : 0.85)
             }

@@ -26,8 +26,10 @@ struct VitalityTracker: App {
     }()
     
     var body: some Scene {
-        WindowGroup{
-            CategoryView()        }
+        WindowGroup
+        {
+            ContentView()
+        }
         .modelContainer(sharedModelContainer)
     }
 }

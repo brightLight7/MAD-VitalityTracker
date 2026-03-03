@@ -8,10 +8,18 @@
 import SwiftUI
 
 struct ContentView: View {
+    @AppStorage("hasSeenOnboarding") var hasSeenOnboarding = false
     @StateObject private var controller = HabitListController()
     var body: some View {
-        
+        if hasSeenOnboarding
+        {
             CategoryView()
+        }
+        else
+        {
+            HomeView()
+        }
+            
         
         
     }
