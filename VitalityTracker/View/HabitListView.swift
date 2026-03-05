@@ -1,6 +1,8 @@
 import SwiftUI
 import SwiftData
 
+
+
 struct HabitListView: View {
     let category: Category
     @Environment(\.modelContext) private var modelContext
@@ -17,6 +19,10 @@ struct HabitListView: View {
     @State private var searchQuery: String = ""
     @State private var viewingDate: Date = Date()
     
+    @State var completionFiltering: CompletionFiltering = .all
+    
+    @State var titleSort: TitleSorting = .az
+    
     private var isToday: Bool
     {
         Calendar.current.isDateInToday(viewingDate)
@@ -29,56 +35,19 @@ struct HabitListView: View {
         return df.string(from: Calendar.current.startOfDay(for: viewingDate))
     }
     
-    var displayedItems: [Item]{
+    var displayedItems: [Item]
+    {
         let base = controller.filteredCatItems(for: category, searchQuery: searchQuery)
         
-        let selectedDate = Calendar.current.startOfDay(for: viewingDate)
-        
-        return base.filter
-        {
-            $0.createdDate <= selectedDate
-        }
+        return HabitSortFilter.apply(items: base, viewingDate: viewingDate, completionFilter: completionFiltering, titleSort: titleSort, isCompleted:
+            {
+                id, date in
+                streaksController.isCompleted(id, on: date)
+            }
+        )
     }
     
-    private var dayBar: some View
-    {
-        HStack(spacing: 12)
-        {
-            Button
-            {
-                viewingDate = Calendar.current.date(byAdding: .day, value: -1, to: viewingDate) ?? viewingDate
-            } label:
-            {
-                Image(systemName: "chevron.left")
-                Text("Prev")
-            }
-            
-            Spacer()
-            
-            VStack(spacing: 2)
-            {
-                Text(dateTitle).font(.headline)
-                if !isToday
-                {
-                    Text("Read-only").font(.caption).foregroundStyle(.secondary)
-                }
-            }
-            
-            Spacer()
-            
-            Button
-            {
-                viewingDate = Calendar.current.date(byAdding: .day, value: 1, to: viewingDate) ?? viewingDate
-            } label:
-            {
-                Text("Next")
-                Image(systemName: "chevron.right")
-            }
-            .disabled(isToday)
-        }
-        .padding(.horizontal)
-        .padding(.top, 8)
-    }
+    
     
     var body: some View
     {
@@ -89,7 +58,12 @@ struct HabitListView: View {
                 .padding(.horizontal)
         }
         
-        dayBar
+        DateBar
+        (
+            viewingDate: $viewingDate, isToday: isToday, dateTitle: dateTitle
+            
+        )
+        
         
         List
         {
@@ -163,6 +137,33 @@ struct HabitListView: View {
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing)
             {
+                Menu
+                {
+                    Section("Filter")
+                    Picker("Completion", selection: $completionFiltering)
+                    {
+                        ForEach(CompletionFiltering.allCases)
+                        {
+                            option in Text(option.rawValue).tag(option)
+                        }
+                    }
+                    
+                    Section("Sort")
+                    Picker("Title", selection: titleSort)
+                    {
+                        ForEach(TitleSorting.allCases)
+                        {
+                            option in Text(option.rawValue).tag(option)
+                        }
+                    }
+                    
+                label:
+                    {
+                        Label("Sort & Filter", systemImage: line.3.horizontal.decrease.circle)
+                    }
+                    
+                }
+                
                 Button(action: {
                     showAdd = true
                 })
@@ -220,19 +221,3 @@ struct HabitListView: View {
     }
     
 }
-
-#Preview {
-    ContentView()
-        .modelContainer(for: [Category.self, Item.self], inMemory: true)
-}
-
-
-
-
-
-
-
-
-
-
-
