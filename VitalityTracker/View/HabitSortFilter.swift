@@ -29,7 +29,10 @@ enum HabitSortFilter
     {
         let selectedDate = Calendar.current.startOfDay(for: viewingDate)
         
+        // TESTING PURPOSES
         var result = items.filter{$0.createdDate <= selectedDate}
+        
+        //var result = items
         
         result = result.filter
         {

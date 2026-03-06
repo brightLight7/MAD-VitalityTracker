@@ -16,34 +16,67 @@ struct CategoryView: View {
     @State private var showAdd: Bool = false
     @State private var selectedCategory: Category?
     
+    @State private var completionFiltering: CompletionFiltering = .all
+    
+    @State private var titleSort: TitleSorting = .az
+    
     
     var body: some View {
+        
+        
         NavigationSplitView
         {
-            List
+            Group
             {
-                ForEach(controller.categories, id: \.id) { cat in
-                    NavigationLink(destination: HabitListView(category: cat).environmentObject(habitController), label: { Text(cat.name) })
-                }
-                .onDelete
+                if controller.categories.isEmpty
                 {
-                    indexSet in
-                    for index in indexSet
+                    VStack(spacing: 12)
                     {
-                        let cat = controller.categories[index]
-                        controller.deleteCategory(cat)
+                        EmptyStateView(title: "No Categories yet", message: "Tap the + button to create your first categories to store your habits in!", systemImage: "square.grid.2x2")
                     }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    
                 }
+                else
+                {
+                    List
+                    {
+                        ForEach(controller.categories, id: \.id) { cat in
+                            NavigationLink(destination: HabitListView(category: cat).environmentObject(habitController), label: { Text(cat.name) })
+                        }
+                        .onDelete
+                        {
+                            indexSet in
+                            for index in indexSet
+                            {
+                                let cat = controller.categories[index]
+                                controller.deleteCategory(cat)
+                            }
+                        }
+                    }
+                    
+                }
+               
             }
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing)
                 {
+                    SortFilterMenu(habitListPage: false, completionFiltering: $completionFiltering, titleSort: $titleSort)
+                }
+                ToolbarItem(placement: .navigationBarTrailing)
+                {
+                    
                     Button(action:  {
                         showAdd = true
                     }){
                         Label("Add Category", systemImage: "plus")
                     }
                 }
+                ToolbarItem(placement: .navigationBarTrailing)
+                {
+                    DarkModeToolbarButton()
+                }
+                
             }
             .alert("Add Category", isPresented: $showAdd){
                 TextField("Enter new todo", text: $newCat)

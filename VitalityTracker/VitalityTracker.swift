@@ -13,6 +13,7 @@ struct VitalityTracker: App {
     //@StateObject private var controller = HabitListController()
     @StateObject private var streaksController = StreaksController()
     @StateObject private var notificationController = NotificationController()
+    @StateObject private var themeManager = ThemeManager()
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
             Category.self,
@@ -34,6 +35,8 @@ struct VitalityTracker: App {
             ContentView()
                 .environmentObject(streaksController)
                 .environmentObject(notificationController)
+                .environmentObject(themeManager)
+                .preferredColorScheme(themeManager.preferredColorScheme)
         }
         .modelContainer(sharedModelContainer)
     }

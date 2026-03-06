@@ -1,32 +1,24 @@
 import SwiftUI
 import SwiftData
 
-
-
 struct HabitListView: View {
     let category: Category
     @Environment(\.modelContext) private var modelContext
     @EnvironmentObject var controller: HabitListController
     @EnvironmentObject var streaksController: StreaksController
     
-    @State private var selectedItem: Item? = nil
+    @State private var selectedItem: Item?
     @State private var showEditSheet = false
     @State private var showQuickRename = false
     @State private var quickRenameText = ""
-    
-    @State private var showAdd: Bool = false
+    @State private var showAdd = false
     @State private var newItem: String = ""
     @State private var searchQuery: String = ""
     @State private var viewingDate: Date = Date()
     
-    @State var completionFiltering: CompletionFiltering = .all
+    @State private var completionFiltering: CompletionFiltering = .all
     
-    @State var titleSort: TitleSorting = .az
-    
-    private var isToday: Bool
-    {
-        Calendar.current.isDateInToday(viewingDate)
-    }
+    @State private var titleSort: TitleSorting = .az
     
     private var dateTitle: String
     {
@@ -35,189 +27,125 @@ struct HabitListView: View {
         return df.string(from: Calendar.current.startOfDay(for: viewingDate))
     }
     
-    var displayedItems: [Item]
-    {
-        let base = controller.filteredCatItems(for: category, searchQuery: searchQuery)
-        
-        return HabitSortFilter.apply(items: base, viewingDate: viewingDate, completionFilter: completionFiltering, titleSort: titleSort, isCompleted:
-            {
-                id, date in
-                streaksController.isCompleted(id, on: date)
-            }
-        )
-    }
-    
-    
+//    private func displayedItems() -> [Item]
+//    {
+//        
+//    }
     
     var body: some View
     {
-        VStack
+        let base = controller.filteredCatItems(for: category, searchQuery: searchQuery)
+        
+        let items = HabitSortFilter.apply(items: base, viewingDate: viewingDate, completionFilter: completionFiltering, titleSort: titleSort, isCompleted:
+                                            {
+            id, date in
+            streaksController.isCompleted(id, on: date)
+        }
+        )
+        return VStack
         {
             TextField("Search habits...", text: $searchQuery)
                 .textFieldStyle(RoundedBorderTextFieldStyle())
                 .padding(.horizontal)
-        }
-        
-        DateBar
-        (
-            viewingDate: $viewingDate, isToday: isToday, dateTitle: dateTitle
             
-        )
-        
-        
-        List
-        {
+            DateBar(viewingDate: $viewingDate, isToday: Calendar.current.isDateInToday(viewingDate), dateTitle: dateTitle)
             
-            
-            ForEach(displayedItems, id: \.id)
+            if items.isEmpty
             {
-                (item: Item) in
-                let done = streaksController.isCompleted(item.id, on: viewingDate)
-                let s = streaksController.streak(for: item, endingOn: viewingDate)
+                Spacer()
                 
-                HStack (spacing: 12)
+                EmptyStateView(title: "No Habits made", message: "Tap the + button to create your first habit!", systemImage: "checklist")
+                
+                Spacer()
+                
+            }
+            else
+            {
+                
+                List
+                {
+                    
+                    ForEach(items, id: \.id)
+                    {
+                        item in HabitRowView(item: item, viewingDate: viewingDate, onTap: {selectedItem = item; showEditSheet = true}, onLongPress: {selectedItem = item; quickRenameText = item.title; showQuickRename = true})
+                    }
+                    .onDelete { indexSet in
+                        for index in indexSet.sorted(by: >)
+                        {
+                            let item = items[index]
+                            controller.deleteItem(item, from: category)
+                        }
+                    }
+                }
+            }
+        }
+                .navigationTitle(category.name)
+                .toolbar
+            {
+                ToolbarItem(placement: .navigationBarTrailing)
+                {
+                    SortFilterMenu(habitListPage: true, completionFiltering: $completionFiltering, titleSort: $titleSort)
+                    
+                }
+                
+                ToolbarItem(placement: .navigationBarTrailing)
                 {
                     Button
                     {
-                        streaksController.toggleCompletion(item.id, on: viewingDate)
-                    }
-                label:
+                        showAdd = true
+                    } label:
                     {
-                        Image(systemName: done ? "checkmark.square.fill" : "square")
-                            .font(.title3)
+                        Label("Create habit", systemImage: "plus")
                     }
-                    .buttonStyle(.plain)
-                    
-                    Text(item.title)
-                        .strikethrough(done)
-                    
-                    Spacer()
-                    if s > 0
-                    {
-                        HStack(spacing: 4)
-                        {
-                            Text("🔥")
-                            Text("\(s)")
-                                .font(.caption)
-                                .bold()
-                                .foregroundStyle(.orange)
-                        }
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(.thinMaterial)
-                        .clipShape(Capsule())
-                        
-                    }
-                    
-                    
                 }
-                .contentShape(Rectangle())
-                .onTapGesture{
-                    //guard isToday else {return} // read-only for previous days
-                    selectedItem = item
-                    showEditSheet = true
-                }
-                //.opacity(isToday ? 1 : 0.85)
-                .onLongPressGesture
+                ToolbarItem(placement: .navigationBarTrailing)
                 {
-                    selectedItem = item
-                    quickRenameText = item.title
-                    showQuickRename = true
+                    DarkModeToolbarButton()
                 }
-            }
-            .onDelete { indexSet in
-                for index in indexSet.sorted(by: >)
+            }.alert("Add Habit", isPresented: $showAdd){
+                TextField("Enter new habit", text: $newItem)
+                Button("Add")
                 {
-                    let item = displayedItems[index]
-                    controller.deleteItem(item, from: category)
+                    controller.addItem(title: newItem, to: category)
+                    newItem = ""
+                }
+                Button("Not now", role: .cancel) {
+                    newItem = ""
                 }
             }
-        }
-        .navigationTitle(category.name)
-        .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing)
-            {
-                Menu
-                {
-                    Section("Filter")
-                    Picker("Completion", selection: $completionFiltering)
-                    {
-                        ForEach(CompletionFiltering.allCases)
-                        {
-                            option in Text(option.rawValue).tag(option)
-                        }
-                    }
-                    
-                    Section("Sort")
-                    Picker("Title", selection: titleSort)
-                    {
-                        ForEach(TitleSorting.allCases)
-                        {
-                            option in Text(option.rawValue).tag(option)
-                        }
-                    }
-                    
-                label:
-                    {
-                        Label("Sort & Filter", systemImage: line.3.horizontal.decrease.circle)
-                    }
-                    
-                }
-                
-                Button(action: {
-                    showAdd = true
-                })
-                {
-                    Label("Create habit", systemImage: "plus")
-                }
-                
-            }
-        }
-        .alert("Add Habit", isPresented: $showAdd){
-            TextField("Enter new habit", text: $newItem)
-            Button("Add")
-            {
-                controller.addItem(title: newItem, to: category)
-                newItem = ""
-            }
-            Button("Not now", role: .cancel) {
-                newItem = ""
-            }
-        }
-        .sheet(isPresented: $showEditSheet)
-        {
-            if let selectedItem
-            {
-                HabitSheet(
-                    item: selectedItem,
-                    onSave: {newTitle in
-                        controller.updateItemTitle(selectedItem, newTitle: newTitle)}
-                )
-            }
-        }
-        .alert("Rename Habit", isPresented: $showQuickRename)
-        {
-            TextField("habit title", text: $quickRenameText)
-            Button("Cancel", role: .cancel) {}
-            Button("Save")
+            .sheet(isPresented: $showEditSheet)
             {
                 if let selectedItem
                 {
-                    controller.updateItemTitle(selectedItem, newTitle: quickRenameText)
+                    HabitSheet(
+                        item: selectedItem,
+                        onSave: {newTitle in
+                            controller.updateItemTitle(selectedItem, newTitle: newTitle)}
+                    )
                 }
             }
+            .alert("Rename Habit", isPresented: $showQuickRename)
+            {
+                TextField("habit title", text: $quickRenameText)
+                Button("Cancel", role: .cancel) {}
+                Button("Save")
+                {
+                    if let selectedItem
+                    {
+                        controller.updateItemTitle(selectedItem, newTitle: quickRenameText)
+                    }
+                }
+            }
+        message:
+            {
+                Text("Enter a new habit to add to the list")
+            }
+            .onAppear
+            {
+                
+                controller.setModelContext(modelContext)
+            }
         }
-        message: {
-            Text("Enter a new habit to add to the list")
-        }
-        //.navigationTitle(category.name)
-        .onAppear
-        {
-            
-            controller.setModelContext(modelContext)
-            // viewingDate = Date()
-        }
-        .navigationTitle(category.name)
-    }
+    
     
 }

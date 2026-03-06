@@ -12,6 +12,7 @@ struct DateBar: View
     @Binding var viewingDate: Date
     let isToday: Bool
     let dateTitle: String
+    
     var body: some View
     {
         HStack(spacing: 12)
