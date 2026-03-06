@@ -54,4 +54,28 @@ class CategoryController: ObservableObject
         modelContext.delete(category)
         fetchCategories()
     }
+    
+    private func saveContent()
+    {
+        guard let modelContext = modelContext else {return}
+        
+        do
+        {
+            try modelContext.save()
+        }
+        catch
+        {
+            print("Failed to save categories: \(error)")
+        }
+    }
+    
+    func updateCategoryName(_ category: Category, newName: String)
+    {
+        let trimmed = newName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else {return}
+        
+        category.name = trimmed
+        saveContent()
+        fetchCategories()
+    }
 }

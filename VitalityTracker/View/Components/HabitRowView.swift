@@ -5,7 +5,7 @@ struct HabitRowView: View
     let item: Item
     let viewingDate: Date
     let onTap: () -> Void
-    let onLongPress: () -> Void
+    //let onLongPress: () -> Void
     
     @EnvironmentObject var streaksController: StreaksController
     
@@ -64,7 +64,7 @@ struct HabitRowView: View
         .onTapGesture {
             onTap()
         }
-        .onLongPressGesture{onLongPress()}
+        //.onLongPressGesture{onLongPress()}
 //            .onTapGesture{
 //                //guard isToday else {return} // read-only for previous days
 //                selectedItem = item

@@ -15,6 +15,8 @@ struct HabitListView: View {
     @State private var newItem: String = ""
     @State private var searchQuery: String = ""
     @State private var viewingDate: Date = Date()
+
+    //@State private var habitBeingEdited: Item?
     
     @State private var completionFiltering: CompletionFiltering = .all
     
@@ -67,15 +69,39 @@ struct HabitListView: View {
                     
                     ForEach(items, id: \.id)
                     {
-                        item in HabitRowView(item: item, viewingDate: viewingDate, onTap: {selectedItem = item; showEditSheet = true}, onLongPress: {selectedItem = item; quickRenameText = item.title; showQuickRename = true})
-                    }
-                    .onDelete { indexSet in
-                        for index in indexSet.sorted(by: >)
+                        item in HabitRowView(item: item, viewingDate: viewingDate, onTap: {selectedItem = item; showEditSheet = true})
+                        
+                            .swipeActions(edge: .leading, allowsFullSwipe: true)
                         {
-                            let item = items[index]
-                            controller.deleteItem(item, from: category)
+                            Button
+                            {
+                                selectedItem = item
+                                quickRenameText = item.title
+                                showQuickRename = true
+                            }label:
+                            {
+                                Label( "Edit", systemImage: "pencil")
+                            }
+                            .tint(.blue)
+                        }
+                        .swipeActions(edge: .trailing, allowsFullSwipe: true)
+                        {
+                            Button (role: .destructive)
+                            {
+                                controller.deleteItem(item, from: category)
+                            }label:
+                            {
+                                Label ("Delete", systemImage: "trash")
+                            }
                         }
                     }
+//                    .onDelete { indexSet in
+//                        for index in indexSet.sorted(by: >)
+//                        {
+//                            let item = items[index]
+//                            controller.deleteItem(item, from: category)
+//                        }
+//                    }
                 }
             }
         }
@@ -106,7 +132,7 @@ struct HabitListView: View {
                 TextField("Enter new habit", text: $newItem)
                 Button("Add")
                 {
-                    controller.addItem(title: newItem, to: category)
+                    controller.addItem(title: newItem, to: category, createdOn: viewingDate)
                     newItem = ""
                 }
                 Button("Not now", role: .cancel) {

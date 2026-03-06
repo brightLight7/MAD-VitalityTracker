@@ -16,13 +16,16 @@ struct CategoryView: View {
     @State private var showAdd: Bool = false
     @State private var selectedCategory: Category?
     
+    
+    @State private var showQuickRename = false
+    @State private var quickRenameText = ""
+    
     @State private var completionFiltering: CompletionFiltering = .all
     
     @State private var titleSort: TitleSorting = .az
     
     
     var body: some View {
-        
         
         NavigationSplitView
         {
@@ -42,21 +45,40 @@ struct CategoryView: View {
                     List
                     {
                         ForEach(controller.categories, id: \.id) { cat in
-                            NavigationLink(destination: HabitListView(category: cat).environmentObject(habitController), label: { Text(cat.name) })
-                        }
-                        .onDelete
-                        {
-                            indexSet in
-                            for index in indexSet
+                            NavigationLink {
+                                HabitListView(category: cat)
+                                .environmentObject(habitController)
+                            } label:
                             {
-                                let cat = controller.categories[index]
-                                controller.deleteCategory(cat)
+                                Text(cat.name)
+                            }
+                        
+                            .swipeActions(edge: .leading, allowsFullSwipe: false)
+                            {
+                                Button
+                                {
+                                    selectedCategory = cat
+                                    quickRenameText = cat.name
+                                    showQuickRename = true
+                                }label:
+                                {
+                                    Label( "Edit", systemImage: "pencil")
+                                }
+                                .tint(.blue)
+                            }
+                            .swipeActions(edge: .trailing, allowsFullSwipe: true)
+                            {
+                                Button (role: .destructive)
+                                {
+                                    controller.deleteCategory(cat)
+                                }label:
+                                {
+                                    Label ("Delete", systemImage: "trash")
+                                }
                             }
                         }
                     }
-                    
                 }
-               
             }
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing)
@@ -91,6 +113,27 @@ struct CategoryView: View {
             }message: {
                 Text("Enter a new task to add to the list.")
             }
+            .alert("Rename Category", isPresented: $showQuickRename){
+                TextField("Category name", text: $quickRenameText)
+                
+                Button("Cancel", role: .cancel)
+                {
+                    quickRenameText = ""
+                }
+                
+                Button("Save")
+                {
+                    if let selectedCategory
+                    {
+                        controller.updateCategoryName(selectedCategory, newName: quickRenameText)
+                        quickRenameText = ""
+                    }
+                }
+            }message: {
+                    Text("Enter a new category name")
+                }
+                
+            
             .navigationTitle("Categories")
         } detail: {
             Text("Select a Category")

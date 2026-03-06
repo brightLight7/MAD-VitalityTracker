@@ -21,11 +21,11 @@ class HabitListController: ObservableObject{
     }
     
     // (C)REATE
-    func addItem(title: String, to category: Category)
+    func addItem(title: String, to category: Category, createdOn date: Date)
     {
         guard let modelContext = modelContext else {return}
         guard !title.isEmpty else {return}
-        let newItem = Item(title: title)
+        let newItem = Item(title: title, createdDate: date)
         modelContext.insert(newItem)
         category.items.append(newItem)
         saveContent()
@@ -44,7 +44,7 @@ class HabitListController: ObservableObject{
         }
     }
     
-    // (U)PDATE
+    
     func toggleItem(_ item: Item)
     {
         item.isDone.toggle()

@@ -16,12 +16,14 @@ class Item{
     var isDone: Bool
     var createdDate: Date
     
-    init (title: String)
+    init (title: String, createdDate: Date)
     {
+        let createdDay = Calendar.current.startOfDay(for: createdDate)
+        
         self.id = UUID()
         self.title = title
         self.isDone = false
-        self.createdDate = Calendar.current.startOfDay(for: Date())
+        self.createdDate = createdDay
     }
 }
 

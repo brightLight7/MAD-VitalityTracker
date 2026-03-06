@@ -80,10 +80,12 @@ class StreaksController: ObservableObject
     func streak (for item: Item, endingOn endDate: Date) -> Int{
         var streakCount = 0
         var day = calendar.startOfDay(for: endDate)
+        let createdDate = calendar.startOfDay(for: item.createdDate)
         
-        while true
+        while day >= createdDate
         {
             let key = dayKey(for: day)
+            
             guard let log = dailyLog[key],
                   log.IDs_completedHabit.contains(item.id)
             else
